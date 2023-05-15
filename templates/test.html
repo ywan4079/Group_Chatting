@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<button onclick="openKeyFile()">Open Key File</button>
+<p id="keyContents"></p>
+
+<script>
+function openKeyFile() {
+  // Make an HTTP request to the server-side script with the desired file name
+  var fileName = 'server_public.pem'; // Specify the desired file name here
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'server_script.php?fileName=' + fileName, true);
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+      // Update the HTML page with the contents of the key file
+      document.getElementById('keyContents').innerText = 'Key File Contents: ' + xhr.responseText;
+      
+      // Perform encryption using the key file contents
+      // ... your encryption logic here ...
+    }
+  };
+  xhr.send();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+{
+  "user_info": [
+    {
+      "username": "test1",
+      "password": [
+        "fff4ed8fab320192902f1305017bd70c",
+        "D9KaCx2Bon9AK6wrDUiNdQyRNUd0sy1vSk9VrZVseMzucXrgqQ"
+      ],
+      "friends": [
+        "test2",
+        "test3",
+        "Brian"
+      ]
+    },
+    {
+      "username": "test2",
+      "password": [
+        "c258131186029c325f8e9ee1d690ad13",
+        "sDggGxwBdSt8PfspXuuGrcfgmNgeAHdODf4n6HCmXH0neG8cdD"
+      ],
+      "friends": [
+        "test1"
+      ]
+    },
+    {
+      "username": "test3",
+      "password": [
+        "d25564bcdad09beeb366bbac59b72e8b",
+        "9gVn8GpCSK3huPWKGHHsm5CoXXg7HVKWZcELubALe6GGxrHiiY"
+      ],
+      "friends": [
+        "test1"
+      ]
+    },
+    {
+      "username": "Brian",
+      "password": [
+        "1c64728f363a09dd624b36f578f0af9b",
+        "l5WnLkUWwZgI9uVgvVWfwOKULGVzeShSgb2R2bQ9BaQw2pub4D"
+      ],
+      "friends": [
+        "test1"
+      ]
+    }
+  ]
+}
