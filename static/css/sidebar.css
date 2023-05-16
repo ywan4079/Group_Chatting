@@ -1,0 +1,97 @@
+/* Style the sidebar - fixed full height */
+.sidebar {
+    height: 100%;
+    width: 100px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #D3D3D3;
+    overflow-x: hidden;
+  }
+  
+  /* Style sidebar links */
+  .sidebar a {
+    padding: 20px 10px 20px 15px;
+    font-size: 60px;
+    display: block;
+  }
+  
+  /* Style links on mouse-over */
+  .sidebar a:hover {
+    background-color: #5A5A5A;
+    color: black;
+  }
+
+
+  .search {
+    background-color: #EEE;
+    width: 300px;
+    height: 60px;
+    margin-left: 90;
+    margin-top: -10;
+  }
+
+  .search input[type=text] {
+    float: right;
+    padding: 6px;
+    margin-top: 15px;
+    margin-right: 90;
+    font-size: 17px;
+  }
+
+
+  #friend-list { 
+    display: block;
+    margin-left: 90;
+    margin-top: -1;
+    padding: 0;
+    width: 300px;
+    height: 100%;
+    background: #EEE;
+  }
+  
+  .friend {
+    width: 300px;
+    height: 60px;
+    background: #EEE;
+    border-bottom: 1px solid #DDD;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .friend img {
+    width: 45px;
+    height: 45px;
+    border-radius: 30px;
+    border: 2px solid #AAA;
+    object-fit: cover;
+    margin-left: 5px;
+    margin-right: 10px;
+  }
+  
+  .friend .name {
+    font-size: 18px;
+  }
+  
+  .friend.selected {
+    background: #43A047;
+    color: white;
+  }
+  
+  .friend.selected img {
+    border-color: white;
+  }
+  
+  .friend:not(.selected):hover {
+    background: #DDD;
+  }
+
+  /* Style the main content */
+  .main {
+    margin-left: 400px; /* Same as the width of the sidenav */
+
+    padding: 0px 10px;
+  }
+  
