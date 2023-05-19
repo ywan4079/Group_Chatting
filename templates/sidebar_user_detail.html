@@ -1,22 +1,45 @@
 <head>
 <script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="./../static/css/sidebar.css">
+<link rel="stylesheet" href="./../static/css/detail.css">
 </head>
+
+<script>
+  function dynamic_search() {
+
+  var input, filter, ul, li, la, i, txtValue;
+  input = document.getElementById("Input");
+  filter = input.value.toUpperCase();
+  ul = document.getElementById("friend-list");
+  li = ul.getElementsByTagName("li");
+
+
+  for (i = 0; i < li.length; i++) { 
+    la = li[i].getElementsByTagName("div")[0]; // content in label
+    txtValue = la.textContent || la.innerText; 
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      li[i].style.display = "";
+    } else {
+      li[i].style.display = "none";
+    }
+  }
+}
+</script>
 
 <!-- The sidebar -->
 <div class="sidebar">
 
   <a href="#setting"><img src="./../user_icon/test_icon.png" class="image" style="width:60px;height:60px;">
   <a href="#chat"><i class="far fa-comment"></i></a>
-  <a href="#contact"><i class="far fa-address-book"></i></a>
+  <a href="#contact"><i class="fa-solid fa-address-book"></i></a>
   <a href="#forum"><i class="fa-regular fa-comments"></i></a>
   <a href="#setting"><i class="fas fa-cog"></i></a>
   <a href="#logout"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
 </div>
 
 <div class="search">
-  <a href="#create_group"><i class="fa-solid fa-square-plus"></i></a>
-  <input type="text" placeholder="Search...">
+  <a href="#create_group"><i class="fa-solid fa-user-plus"></i></a>
+  <input type="text" placeholder="Search..." id="Input" onkeyup="dynamic_search()">
 </div>
 
 <ul id='friend-list'>
@@ -90,5 +113,10 @@
 
 
 <div class="main">
-  hi
+  <div class="header">
+    <h1 style="text-align: center; margin-top: 50; margin-right: 100; font-size: 50;">user1</h1>
+    <ul><img src='./../user_icon/icon1.png' style="width:150; height: 150; float: right; margin-right: 100; margin-top: -130; object-fit:scale-down;"/></ul>
+  </div>
+  <button style="background-color: aqua;">Message</button>
+  <button style="background-color: rgb(227, 68, 68);">Unfriend</button>
 </div>

@@ -1,0 +1,25 @@
+.header{
+    background-color: rgb(230, 230, 230);
+    width: 1040;
+    height: 180;
+    margin-left: -10;
+    position: fixed;
+}
+
+.main button{
+    color: rgb(0, 0, 0);
+    padding: 14px 20px;
+    left: 400;
+    top: 300;
+    position: relative;
+    display: block;
+    cursor: pointer;
+    width: 200;
+    font-size: 40;
+    margin: 30 0;
+    margin-top: 50;
+}
+
+button:hover {
+    opacity: 0.8;
+  }

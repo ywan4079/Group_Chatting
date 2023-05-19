@@ -1,0 +1,38 @@
+<head>
+<script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="./../static/css/input.css">
+</head>
+
+<div class="container">
+  <form action="/register" method="post">
+    <h1 class="center">Create new account</h1>
+    <div class="box_header"><label for="uname"><b>Username</b></label></div>
+    <input type="text" placeholder="Enter username" name="username" required>
+
+    <div class="box_header"><label for="uname"><b>Unikey</b></label></div>
+    <input type="text" placeholder="Enter Unikey" name="unikey" required>
+
+    <div class="box_header"><label for="psw"><b>Password</b></label></div>
+    <input type="password" placeholder="Enter Password" name="psw" required>
+    <div class="box_header"><label for="psw"><b>Comfirm password</b></label></div>
+    <input type="password" placeholder="Comfirm password" name="psw" required>
+
+    <div class="box_header"><label for="uname"><b>Password reset questions</b></label></div>
+
+    <div class="dropdown">
+      <select name="questions" id="questions">
+        <option value="q1">What is your nickname?</option>
+        <option value="q2">Q2</option>
+        <option value="q3">Q3</option>
+        <option value="q4">Q4</option>
+      </select>
+    </div>
+    <input type="text" placeholder="Enter your answer" name="question" required>
+
+    <div class="center">
+      <button type="submit">Submit</button>
+      <span class="psw"><a href="#">Already have account?</a></span>
+    </div>
+  </form>
+
+</div>

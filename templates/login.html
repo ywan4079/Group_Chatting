@@ -1,0 +1,22 @@
+<head>
+<script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="./../static/css/input.css">
+</head>
+
+<div class="container">
+  <form action="/login" method="post">
+    <h1 class="center">Login</h1>
+    <div class="box_header"><label for="uname"><b>Unikey</b></label></div>
+    <input type="text" placeholder="Enter Unikey" name="unikey" required>
+
+    <div class="box_header"><label for="psw"><b>Password</b></label></div>
+    <input type="password" placeholder="Enter Password" name="psw" required>
+
+    <div class="center">
+      <button type="submit">Login</button>
+      <span class="psw"><a href="#">Forgot password?</a></span>
+      <div class="center"><button type="submit" onclick="window.location.href='/register'">Create a new account</button></div>
+    </div>
+  </form>
+
+</div>

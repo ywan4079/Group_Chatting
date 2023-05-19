@@ -1,0 +1,247 @@
+<head>
+<script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="./../static/css/sidebar.css">
+<link rel="stylesheet" href="./../static/css/chat.css">
+</head>
+
+<script>
+  function dynamic_search() {
+
+  var input, filter, ul, li, la, i, txtValue;
+  input = document.getElementById("Input");
+  filter = input.value.toUpperCase();
+  ul = document.getElementById("friend-list");
+  li = ul.getElementsByTagName("li");
+
+
+  for (i = 0; i < li.length; i++) { 
+    la = li[i].getElementsByTagName("div")[0]; // content in label
+    txtValue = la.textContent || la.innerText; 
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      li[i].style.display = "";
+    } else {
+      li[i].style.display = "none";
+    }
+  }
+}
+</script>
+
+<!-- The sidebar -->
+<div class="sidebar">
+
+  <a href="#setting"><img src="./../user_icon/test_icon.png" class="image" style="width:60px;height:60px;">
+  <a href="#chat"><i class="fa-solid fa-comment"></i></a>
+  <a href="#contact"><i class="far fa-address-book"></i></a>
+  <a href="#forum"><i class="fa-regular fa-comments"></i></a>
+  <a href="#setting"><i class="fas fa-cog"></i></a>
+  <a href="#logout"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
+</div>
+
+<div class="search">
+  <a href="#create_group"><i class="fa-solid fa-square-plus"></i></a>
+  <input type="text" placeholder="Search..." id="Input" onkeyup="dynamic_search()">
+</div>
+
+<ul id='friend-list'>
+  <li class='friend selected'>
+    <img src='./../user_icon/icon1.png'/>
+    <div class='name'>
+      user1
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon2.png' />
+    <div class='name'>
+      user2
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon1.png' />
+    <div class='name'>
+      user3
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon3.png' />
+    <div class='name'>
+      user4
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon2.png' />
+    <div class='name'>
+      user5
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon3.png' />
+    <div class='name'>
+      user6
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon2.png' />
+    <div class='name'>
+      user2
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon1.png' />
+    <div class='name'>
+      user3
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon3.png' />
+    <div class='name'>
+      user4
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon2.png' />
+    <div class='name'>
+      user5
+    </div>
+  </li>
+  <li class='friend'>
+    <img src='./../user_icon/icon3.png' />
+    <div class='name'>
+      user6
+    </div>
+  </li>
+</ul>
+
+
+<div class="main">
+    <!-- Main container  -->
+        <div class="container">
+    <!--  Message header section starts    -->
+    <div class="msg-header">
+      <div class="container1">
+
+          <img src="./../user_icon/icon1.png" class="msgimg">
+          <a href="/chat"><i class="fa-solid fa-ellipsis fa-lg" style="float: right;margin-top: 30; left: 990; position: absolute; display: block; color: black;"></i></a>
+          <div class="active">
+              <p>user1</p>
+          </div>
+      </div>
+  </div>
+    <!-- Message header section ends -->
+    <div class="chat_setting">
+      <a href="/chat_history" style="text-decoration: none;">Chat History</a>
+
+      <label class="switch">
+        <input type="checkbox">
+        <span class="slider round"></span>
+        <div class="text">Sticky on top</div>
+      </label>
+      
+      <a href="/chat" style="text-decoration: none; color: rgb(236, 60, 60);">Clear History</a>
+    </div>
+    
+    <!-- Chat inbox section starts -->
+             
+        <div class="chat-page">
+                <div class="msg-inbox">
+                    <div class="chats">
+                         <div class="msg-page">
+    <!-- Contains the incoming and outgoing messages -->
+          <div class="received-chats">
+            <div class="received-chats-img">
+                <img src="./../user_icon/icon2.png">
+
+            </div>
+            <div class="received-msg">
+                <div class="received-msg-inbox">
+                    <p>Hi !! This is message from Riya . Lorem ipsum, dolor sit amet consectetur adipisicing elit. Non quas nemo eum, earum sunt, nobis similique quisquam eveniet pariatur commodi modi voluptatibus iusto omnis harum illum
+                        iste distinctio expedita illo!</p>
+                </div>
+            </div>
+        </div>
+
+          <div class="outgoing-chats">
+              <div class="outgoing-chats-img">
+                  <img src="./../user_icon/icon1.png">
+
+              </div>
+              <div class="outgoing-msg">
+                  <div class="outgoing-chats-msg">
+                      <p class="multi-msg">Hi riya , Lorem ipsum dolor sit amet consectetur adipisicing elit. Illo nobis deleniti earum magni recusandae assumenda.
+                      </p>
+                      <p class="multi-msg">Lorem ipsum dolor sit amet consectetur.</p>
+                  </div>
+              </div>
+          </div>
+
+          <div class="received-chats">
+            <div class="received-chats-img">
+                <img src="./../user_icon/icon2.png">
+            </div>
+            <p><img src="./../user_icon/icon2.png"></p>
+        </div>
+
+        <div class="outgoing-chats">
+          <div class="outgoing-chats-img">
+              <img src="./../user_icon/icon1.png">
+          </div>
+          <p><img src="./../user_icon/icon2.png"></p>
+      </div>
+
+      <div class="received-chats">
+        <div class="received-chats-img">
+            <img src="./../user_icon/icon2.png">
+        </div>
+        <p>
+          <video controls>
+            <source src="./../static/video/rickroll.mp4" type="video/mp4">
+            <source src="./../static/video/rickroll.ogg" type="video/ogg">
+          </video>
+        </p>
+    </div>
+
+    <div class="outgoing-chats">
+      <div class="outgoing-chats-img">
+          <img src="./../user_icon/icon1.png">
+      </div>
+      <p>
+        <video controls>
+          <source src="./../static/video/rickroll.mp4" type="video/mp4">
+          <source src="./../static/video/rickroll.ogg" type="video/ogg">
+        </video>
+      </p>
+      </div>
+
+        
+          <!-- End of incoming and outgoing messages -->
+                    
+    <!--  Message bottom section starts -->
+    <form action="/chat?user=${user}&recipient=${recipient}" method="post" id="FORM">
+    <div class="msg-bottom">
+
+      <div class="image-upload">
+        <label for="img-input">
+          <i class="fa-regular fa-image fa-2xl"></i>
+        </label>
+    
+        <input id="img-input" type="file" accept="image/*"/>
+    </div>
+
+      <div class="image-upload">
+        <label for="video-input">
+          <i class="fa-solid fa-video fa-2xl"></i>
+        </label>
+    
+        <input id="video-input" type="file" accept="video/*"/>
+    </div>
+
+      <div class="input-group">
+          <input name="msg" type="text" class="form-control" placeholder="Write message..." id="InputField">
+          <div class="input-group-append ">
+            <span class="input-group-text send-icon"><i class="fa-solid fa-paper-plane" style="position: absolute; float: right; left: 645;"></i></span>
+          </div>
+      </div>
+  </div> 
+</form>
+                    
+    <!-- Message bottom section ends. -->
+</div>
