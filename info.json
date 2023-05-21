@@ -1,45 +1,88 @@
 {
   "user_info": [
     {
-      "username": "test1",
-      "password": [
-        "fff4ed8fab320192902f1305017bd70c",
-        "D9KaCx2Bon9AK6wrDUiNdQyRNUd0sy1vSk9VrZVseMzucXrgqQ"
-      ],
-      "friends": [
-        "test2",
-        "test3",
-        "Brian"
-      ]
-    },
-    {
-      "username": "test2",
-      "password": [
-        "c258131186029c325f8e9ee1d690ad13",
-        "sDggGxwBdSt8PfspXuuGrcfgmNgeAHdODf4n6HCmXH0neG8cdD"
-      ],
-      "friends": [
-        "test1"
-      ]
-    },
-    {
-      "username": "test3",
-      "password": [
-        "d25564bcdad09beeb366bbac59b72e8b",
-        "9gVn8GpCSK3huPWKGHHsm5CoXXg7HVKWZcELubALe6GGxrHiiY"
-      ],
-      "friends": [
-        "test1"
-      ]
-    },
-    {
+      "unikey": "abcd1234",
       "username": "Brian",
       "password": [
-        "1c64728f363a09dd624b36f578f0af9b",
-        "l5WnLkUWwZgI9uVgvVWfwOKULGVzeShSgb2R2bQ9BaQw2pub4D"
+        "227c2894ed8ee9428ebf106539331937",
+        "6vPa63NLKmVxbAE3E1ltV0ir0PnsLYb4YZ2ASzCo94mPlg423P"
+      ],
+      "question": "q2",
+      "answer": "cody",
+      "top_friends": [
+        "abcd1236"
       ],
       "friends": [
-        "test1"
+        "abcd1236",
+        "abcd1237",
+        "abcd1235"
+      ],
+      "top_groups": [],
+      "groups": [
+        "0"
+      ]
+    },
+    {
+      "unikey": "abcd1235",
+      "username": "test1",
+      "password": [
+        "00f2327d47b5ff32cdee26d3c4449a1f",
+        "H2SgPwcwbqvvAFBZow4PvEXHIBWN9VYScV51vazggxRgDEWTLB"
+      ],
+      "question": "q1",
+      "answer": "123",
+      "top_friends": [],
+      "friends": [
+        "abcd1234"
+      ],
+      "top_groups": [],
+      "groups": [
+        "0"
+      ]
+    },
+    {
+      "unikey": "abcd1236",
+      "username": "test2",
+      "password": [
+        "ab05b29561ae3a0a0ae43b9f7b038a5f",
+        "aVkUB8PaTXtxagMTXHrQxopeElE4kYZC6BxXcwV4VuoaCG4GLB"
+      ],
+      "question": "q1",
+      "answer": "123",
+      "top_friends": [],
+      "friends": [
+        "abcd1234"
+      ],
+      "top_groups": [],
+      "groups": []
+    },
+    {
+      "unikey": "abcd1237",
+      "username": "test3",
+      "password": [
+        "8e7798f0d9c7145fc2dae0c85c4d39ce",
+        "O2hb9xpqb9K7azVOLuEYl1PVIOhiuys6VrfbfDDHw92KU1Gzvk"
+      ],
+      "question": "q1",
+      "answer": "123",
+      "top_friends": [],
+      "friends": [
+        "abcd1234"
+      ],
+      "top_groups": [],
+      "groups": [
+        "0"
+      ]
+    }
+  ],
+  "group_info": [
+    {
+      "id": "0",
+      "name": "Group1",
+      "members": [
+        "abcd1237",
+        "abcd1235",
+        "abcd1234"
       ]
     }
   ]

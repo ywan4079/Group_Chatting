@@ -1,0 +1,123 @@
+<head>
+<script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/chat.css">
+</head>
+
+<script>
+  function dynamic_search() {
+
+  var input, filter, ul, li, la, i, txtValue;
+  input = document.getElementById("Input");
+  filter = input.value.toUpperCase();
+  ul = document.getElementById("friend-list");
+  li = ul.getElementsByTagName("li");
+
+
+  for (i = 0; i < li.length; i++) { 
+    la = li[i].getElementsByTagName("div")[0]; // content in label
+    txtValue = la.textContent || la.innerText; 
+    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+      li[i].style.display = "";
+    } else {
+      li[i].style.display = "none";
+    }
+  }
+}
+</script>
+
+<!-- The sidebar -->
+<div class="sidebar">
+
+  <a href="/sidebar_setting?uid=${uid}&username=${username}"><img src="/img/user_icon/${uid}.png" class="image" style="width:60px;height:60px;">
+    <a href="/default_sidebar?uid=${uid}&username=${username}"><i class="fa-solid fa-comment"></i></a>
+    <a href="/sidebar_contact?uid=${uid}&username=${username}"><i class="far fa-address-book"></i></a>
+    <a href="/sidebar_forum?uid=${uid}&username=${username}"><i class="fa-regular fa-comments"></i></a>
+    <a href="/sidebar_setting?uid=${uid}&username=${username}"><i class="fas fa-cog"></i></a>
+    <a href="/login?uid=${uid}&username=${username}"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
+</div>
+
+<div class="search">
+  <a href="/sidebar_add_group?uid=${uid}&username=${username}"><i class="fa-solid fa-square-plus"></i></a>
+  <input type="text" placeholder="Search..." id="Input" onkeyup="dynamic_search()">
+</div>
+
+<ul id='friend-list'>
+  ${output}
+</ul>
+
+
+<div class="main">
+    <!-- Main container  -->
+        <div class="container">
+    <!--  Message header section starts    -->
+    <div class="msg-header">
+      <div class="container1">
+          <img src="img/user_icon/${target_id}.png" class="msgimg">
+          <a href="/sidebar_chat?uid=${uid}&username=${username}&target_id=${target_id}&target_name=${target_name}"><i class="fa-solid fa-ellipsis fa-lg" style="float: right;margin-top: 30; left: 990; position: absolute; display: block; color: black;"></i></a>
+          <div class="active">
+              <p>${target_name}</p>
+          </div>
+      </div>
+      <form action="/chat_history?uid=${uid}&username=${username}&target_id=${target_id}&target_name=${target_name}" method="post">
+        <input type="text" placeholder="Search history" name="history" style="font-size: 40; margin: 57 380 0 -270; width: 699; position: fixed; border: 2 solid black; background-color: lightgrey; color: black;">
+      </form>
+  </div>
+    <!-- Message header section ends -->
+    <div class="chat_setting">
+      <a href="/chat_history_page?uid=${uid}&username=${username}&target_id=${target_id}&target_name=${target_name}" style="text-decoration: none;">Chat History</a>
+
+      <form action="stick_top?uid=${uid}&username=${username}&target_id=${target_id}&target_name=${target_name}" method="post">
+        <label class="switch">
+          <input type="checkbox" onchange="this.form.submit()" name="sticky" ${checked}>
+          <span class="slider round"></span>
+          <div class="text">Sticky on top</div>
+        </label>
+      </form>
+      
+      <a href="/clear_history?uid=${uid}&username=${username}&target_id=${target_id}&target_name=${target_name}" style="margin-top: -20; text-decoration: none; color: rgb(236, 60, 60);">Clear History</a>
+    </div>
+    
+    <!-- Chat inbox section starts -->
+             
+        <div class="chat-page">
+                <div class="msg-inbox">
+                    <div class="chats">
+                         <div class="msg-page">
+    <!-- Contains the incoming and outgoing messages -->
+    
+      ${msgs}
+
+          <!-- End of incoming and outgoing messages -->
+                    
+    <!--  Message bottom section starts -->
+    <form action="/chat?user=${user}&recipient=${recipient}" method="post" id="FORM">
+    <div class="msg-bottom">
+
+      <div class="image-upload">
+        <label for="img-input">
+          <i class="fa-regular fa-image fa-2xl"></i>
+        </label>
+    
+        <input id="img-input" type="file" accept="image/*"/>
+    </div>
+
+      <div class="image-upload">
+        <label for="video-input">
+          <i class="fa-solid fa-video fa-2xl"></i>
+        </label>
+    
+        <input id="video-input" type="file" accept="video/*"/>
+    </div>
+
+      <div class="input-group">
+          <input name="msg" type="text" class="form-control" placeholder="Write message..." id="InputField">
+          <div class="input-group-append ">
+            <span class="input-group-text send-icon"><i class="fa-solid fa-paper-plane" style="position: absolute; float: right; left: 645;"></i></span>
+          </div>
+      </div>
+  </div> 
+</form>
+                    
+    <!-- Message bottom section ends. -->
+</div>

@@ -1,6 +1,6 @@
 <head>
 <script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="./../static/css/sidebar.css">
+<link rel="stylesheet" href="css/sidebar.css">
 </head>
 
 <script>
@@ -28,88 +28,20 @@
 <!-- The sidebar -->
 <div class="sidebar">
 
-  <a href="#setting"><img src="./../user_icon/test_icon.png" class="image" style="width:60px;height:60px;">
-  <a href="#chat"><i class="far fa-comment"></i></a>
-  <a href="#contact"><i class="fa-solid fa-address-book"></i></a>
-  <a href="#forum"><i class="fa-regular fa-comments"></i></a>
-  <a href="#setting"><i class="fas fa-cog"></i></a>
-  <a href="#logout"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
+  <a href="/sidebar_setting?uid=${uid}&username=${username}"><img src="/img/user_icon/${uid}.png" class="image" style="width:60px;height:60px;">
+    <a href="/default_sidebar?uid=${uid}&username=${username}"><i class="far fa-comment"></i></a>
+    <a href="/sidebar_contact?uid=${uid}&username=${username}"><i class="fas fa-address-book"></i></a>
+    <a href="/sidebar_forum?uid=${uid}&username=${username}"><i class="fa-regular fa-comments"></i></a>
+    <a href="/sidebar_setting?uid=${uid}&username=${username}"><i class="fas fa-cog"></i></a>
+    <a href="/login?uid=${uid}&username=${username}"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
 </div>
 
 <div class="search">
-  <a href="#create_group"><i class="fa-regular fa-circle-xmark"></i></a>
+  <a href="/sidebar_contact?uid=${uid}&username=${username}"><i class="fa-regular fa-circle-xmark"></i></a>
   <input type="text" placeholder="Search..." id="Input" onkeyup="dynamic_search()">
 </div>
 
-<ul id='friend-list'>
-  <li class='friend selected'>
-    <img src='./../user_icon/icon1.png' />
-    <div class='name'>
-      user1
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon2.png' />
-    <div class='name'>
-      user2
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon1.png' />
-    <div class='name'>
-      user3
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon3.png' />
-    <div class='name'>
-      user4
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon2.png' />
-    <div class='name'>
-      user5
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon3.png' />
-    <div class='name'>
-      user6
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon2.png' />
-    <div class='name'>
-      user2
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon1.png' />
-    <div class='name'>
-      user3
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon3.png' />
-    <div class='name'>
-      user4
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon2.png' />
-    <div class='name'>
-      user5
-    </div>
-  </li>
-  <li class='friend'>
-    <img src='./../user_icon/icon3.png' />
-    <div class='name'>
-      user6
-    </div>
-  </li>
-</ul>
-
+${users}
 
 <div class="main">
   

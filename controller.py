@@ -7,6 +7,8 @@
 from bottle import route, get, post, error, request, Bottle,static_file
 
 import model
+import os
+import json
 
 
 #-----------------------------------------------------------------------------
@@ -26,6 +28,22 @@ def serve_pictures(picture):
         Returns a static file object containing the requested picture
     '''
     return static_file(picture, root='static/img/')
+
+#-----------------------------------------------------------------------------
+
+# Allow video loading
+@route('/video/<video:path>')
+def serve_pictures(video):
+    '''
+        serve_pictures
+
+        Serves images from static/img/
+
+        :: picture :: A path to the requested picture
+
+        Returns a static file object containing the requested picture
+    '''
+    return static_file(video, root='static/video/')
 
 #-----------------------------------------------------------------------------
 
@@ -63,21 +81,8 @@ def serve_js(js):
 # Pages
 #-----------------------------------------------------------------------------
 
-# Redirect to login
-@get('/')
-@get('/home')
-def get_index():
-    '''
-        get_index
-        
-        Serves the index page
-    '''
-    username = request.query.get('user')
-    return model.index(username)
-
-#-----------------------------------------------------------------------------
-
 # Display the login page
+@get('/')
 @get('/login')
 def get_login_controller():
     '''
@@ -85,7 +90,8 @@ def get_login_controller():
         
         Serves the login page
     '''
-    return model.login_form()
+    uid = request.query.get('uid')
+    return model.login_page(uid)
 
 #-----------------------------------------------------------------------------
 
@@ -100,92 +106,275 @@ def post_login():
     '''
 
     # Handle the form processing
-    username = request.forms.get('username')
-    password = request.forms.get('password')
+    unikey = request.forms.get('unikey')
+    psw = request.forms.get('psw')
     
     # Call the appropriate method
-    return model.login_check(username, password)
+    return model.login_check(unikey, psw) ###
 
-#-----------------------------------------------------------------------------
+@get('/register')
+def register_page():
+    return model.register_page()
 
-#Display friend list page
-@get('/friends')
-def show_friends():
-    username = request.query.get('user')
-    return model.friends(username)
+@post('/register')
+def register_check():
+    username = request.forms.get('username')
+    unikey = request.forms.get('unikey')
+    psw = request.forms.get('psw')
+    psw2 = request.forms.get('psw2')
+    question = request.forms.get('questions')
+    answer = request.forms.get('answer')
 
-#-----------------------------------------------------------------------------
+    return model.register_check(username, unikey, psw, psw2, question, answer)
 
-#get which user is going chat with
-@post("/chat")
-def chat():
-    username = request.forms.get('user').split(',')[0]
-    recipient = request.forms.get('user').split(',')[1]
-    return model.chat(username, recipient)
+####################################################
 
-#-----------------------------------------------------------------------------
+@get('/reset_psw')
+def reset_psw():
+    return model.reset_psw()
 
-#get message and update chat records
-@post("/send_msg")
+@post('/reset_psw')
+def reset_psw_check():
+    username = request.forms.get('username')
+    unikey = request.forms.get('unikey')
+    question = request.forms.get('questions')
+    answer = request.forms.get('answer')
+    psw = request.forms.get('npsw')
+    psw2 = request.forms.get('npsw2')
+    return model.reset_psw_check(username, unikey, question, answer, psw, psw2)
+
+####################################################
+
+@get('/default_sidebar')
+def default():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.default(uid, username)
+
+@get('/sidebar_chat')
+def chat_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.chat_page(uid, username, target_id, target_name)
+
+@post('/sidebar_chat')
 def send_msg():
     msg = request.forms.get('msg')
-    username = request.query.get('user')
-    recipient = request.query.get('recipient')
-    return model.send_msg(msg, username, recipient)
-
-#-----------------------------------------------------------------------------
-
-@get('/logout')
-def logout():
-    username = request.query.get('user')
-    return model.logout(username)
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.send_msg(msg, uid, username, target_id, target_name)
 
 
-#-----------------------------------------------------------------------------
+
+@get('/chat_setting')
+def chat_setting():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.chat_setting(uid, username, target_id, target_name)
+
+@get('/chat_history_page')
+def chat_history_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.chat_history_page(uid, username, target_id, target_name)
+
+@post('/chat_history')
+def chat_history_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    search_word = request.forms.get('history')
+    return model.chat_history(uid, username, target_id, target_name, search_word)
+
+@get('/clear_history')
+def clear_history():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    with open(f'chat_records/{uid}_{target_id}', 'wb') as f:
+        f.write(b'')
+    return model.chat_page(uid, username, target_id, target_name)
+
+@post('/stick_top')
+def stick_top():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    sticky = request.forms.get('sticky')  #on or None
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        if (sticky != None):
+            for i in range(len(data['user_info'])):
+                if data['user_info'][i]['unikey'] == uid:
+                    if (target_id.isnumeric()): #is group
+                        data['user_info'][i]['top_groups'].append(str(target_id))
+                    else:
+                        data['user_info'][i]['top_friends'].append(target_id)
+        else:
+            for i in range(len(data['user_info'])):
+                if data['user_info'][i]['unikey'] == uid:
+                    if (target_id.isnumeric()): #is group
+                        data['user_info'][i]['top_groups'].remove(str(target_id))
+                    else:
+                        data['user_info'][i]['top_friends'].remove(target_id)
+
+    with open('info.json', 'w') as f:
+        json.dump(data, f, indent=2)
+    return model.chat_setting(uid, username, target_id, target_name) 
+
+@get('/add_group_page')
+def add_group_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.add_group_page(uid, username)
+
+@post('/add_group')
+def add_group():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    num = request.query.get('num')
+    groupname = request.forms.get('groupname')
+    result = []
+    for i in range(int(num)):
+        r = request.forms.get(f'checkbox{i}')
+        if r != None: result.append(r)
+    result.append(uid)
+
+    return model.add_group(uid, username, result, groupname)
+
+@post('/sendimg')
+def sendimg():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    img = request.files.get('sendimage')
+    path = 'img/records/'
+    if os.path.exists(f"static/img/records/{img.filename}"):
+        i = 0
+        while 1:
+            if os.path.exists(f"static/img/records/{i}"):
+                i+=1
+                continue
+            img.save(f"static/img/records/{i}")
+            path += f"{i}"
+            break
+    else:
+        img.save(f"static/img/records/"+img.filename)
+        path += img.filename
+
+    return model.sendimg(uid, username, target_id, target_name, path)
+
+@post('/sendvideo')
+def sendvideo():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    video = request.files.get('sendvideo')
+    path = 'video/'
+    if os.path.exists(f"static/video/{video.filename}"):
+        i = 0
+        while 1:
+            if os.path.exists(f"static/video/{i}"):
+                i+=1
+                continue
+            video.save(f"static/video/{i}")
+            path += f"{i}"
+            break
+    else:
+        video.save(f"static/video/"+video.filename)
+        path += video.filename
+    
+    print(path)
+    return model.sendvideo(uid, username, target_id, target_name, path)
 
 
-@get('/about')
-def get_about():
-    '''
-        get_about
-        
-        Serves the about page
-    '''
-    username = request.query.get('user')
-    return model.about(username)
-#-----------------------------------------------------------------------------
+####################################################
 
-#display sign up page
-@get('/sign_up')
-def show_sign_up_page():
-    return model.show_sign_up_page()
+@get('/sidebar_contact')
+def contact_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.contact_page(uid, username)
 
-#-----------------------------------------------------------------------------
+@get('/add_friends_page')
+def add_friends_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.add_friends_page(uid, username)
 
-#attempt to sign up
-@post('/sign_up')
-def sign_up_check():
-    username = request.forms.get('username')
-    password = request.forms.get('password')
-    password_2 = request.forms.get('password_2')
-    return model.sign_up_check(username, password, password_2)
+@get('/add_friend')
+def add_friend():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.add_friend(uid, username, target_id, target_name)
 
-#-----------------------------------------------------------------------------
+@get('/unfriend')
+def unfriend():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.unfriend(uid, username, target_id, target_name)
 
-#display add friends page
-@get('/add_friends')
-def show_add_friends():
-    username = request.query.get('user')
-    return model.show_add_friends(username)
+@get('/user_detail')
+def user_detail():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    target_id = request.query.get('target_id')
+    target_name = request.query.get('target_name')
+    return model.user_detail(uid, username, target_id, target_name)
 
-#-----------------------------------------------------------------------------
+####################################################
 
-#attempt to add friends
-@post('/add_friends')
-def add_friends_check():
-    username = request.query.get('user')
-    recipient = request.forms.get('username')
-    return model.add_friends_check(username, recipient)
+@get('/sidebar_forum')
+def forum_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.forum_page(uid, username)
+
+@get('/sidebar_setting')
+def setting_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.setting_page(uid, username)
+
+@get('/update_name_page')
+def update_name_page():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    return model.update_name_page(uid, username)
+
+@post('/update_name')
+def update_name():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    newname = request.forms.get('newname')
+    return model.update_name(uid, username, newname)
+
+@post('/uploadimg')
+def uploadimg():
+    uid = request.query.get('uid')
+    username = request.query.get('username')
+    if os.path.exists(f"./static/img/user_icon/{uid}.png"):
+        os.remove(f"./static/img/user_icon/{uid}.png")
+    img = request.files.get('uploadimage')
+    img.save(f"./static/img/user_icon/{uid}.png")
+    return model.setting_page(uid, username)
 
 #-----------------------------------------------------------------------------
 

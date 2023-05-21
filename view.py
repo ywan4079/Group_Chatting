@@ -31,7 +31,7 @@ class View():
         return self.load_and_render(*args, **kwargs)
 
 
-    def load_and_render(self, filename, header="header", tailer="tailer", **kwargs): ########
+    def load_and_render(self, filename, header="none", tailer="none", **kwargs): ########
         ''' 
             Loads and renders templates
 

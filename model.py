@@ -8,340 +8,983 @@
 import view
 import random
 import json
+import random
+import shutil
+import os
 from hashlib import md5
 import rsa
 
 # Initialise our views, all arguments are defaults for the template
 page_view = view.View()
 
-
-login = False  # By default assume bad creds
 login_status = {}
-#-----------------------------------------------------------------------------
-# Index
-#-----------------------------------------------------------------------------
-
-def index(username):
-    '''
-        index
-        Returns the view for the index
-    '''
-    global login_status
-    if username == None or username not in login_status:
-        return page_view("index")
-    if login_status[username]:
-        return page_view("index", header='header_in', user=username)
-    else:
-        return page_view("index")
 
 #-----------------------------------------------------------------------------
 # Login
 #-----------------------------------------------------------------------------
 
-def login_form():
-    '''
-        login_form
-        Returns the view for the login_form
-    '''
-    return page_view("login", header='header_no_pic')
+def login_page(uid):
+    if uid != None:
+        login_status[uid] = False
+    return page_view("login")
 
 #-----------------------------------------------------------------------------
 
 # Check the login credentials
-def login_check(username, password):
-    '''
-        login_check
-        Checks usernames and passwords
-
-        :: username :: The username
-        :: password :: The password
-
-        Returns either a view for valid credentials, or a view for invalid credentials
-    '''
-
-    
-    err_str = "Incorrect Username" #error massage by default is incorrect username
-    login = False # By default assume bad creds
+def login_check(unikey, psw):
+    login = False
+    friends = []
+    dict = {}
     with open('info.json', 'r') as f:
         data = json.load(f)
-
         for row in data['user_info']:
-            if row['username'] == username: 
-                pwd_hash = hash_calculator(password, row['password'][1])[0]
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == unikey: 
+                pwd_hash = hash_calculator(psw, row['password'][1])[0]
                 if pwd_hash == row['password'][0]: #both correct
                     login = True
-                    break
-
-            if row['username'] == username:  #incorrect password
-                err_str = "Incorrect Password"
-            
-    global login_status
+                    username = row['username']
+                    friends += row['groups']
+                    friends += row['friends']
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+                    
     
-    #if none of these if statements are executed, invalid username
-    if login: 
-        login_status[username] = True
-        return page_view("valid", user=username,header='header_in_no_pic')
-    else:
-        return page_view("invalid", reason=err_str, header='header_no_pic')
-
-
-#-----------------------------------------------------------------------------
-# Friends
-#-----------------------------------------------------------------------------
-
-def friends(user):
-    global login_status
-    if user not in login_status or not login_status[user]:
-        return page_view("login", header='header_no_pic')
-    
-    friends = []
-    with open('info.json', 'r') as f:
-        data = json.load(f)
-        for row in data['user_info']:
-            if row['username'] == user:
-                friends = row['friends'] #get firends of current user
-                break
-
-    html_form = ''
-    for f in friends:
-        html_form += f'<button name="user" type="submit" value="{user},{f}">{f}</button>' #display user's friends as buttons
-    return page_view("friend_list", header='header_in_no_pic', friends=html_form, user=user)
-
-
-#-----------------------------------------------------------------------------
-# Chat page
-#-----------------------------------------------------------------------------
-def chat(username, recipient):
-    global login_status
-    if username not in login_status or not login_status[username]:
-        return page_view("login", header='header_no_pic')
-    
-    records = ''
-    private = ''
-    with open("key/{}_private.pem".format(username), 'rb') as k:
-        private = k.read()
-    private = rsa.PrivateKey._load_pkcs1_pem(private)
-
-    with open(f'chat_records/{username}_{recipient}', 'rb') as f:
-        encrypt_records = f.read()
-        if encrypt_records == b'':
-            records = ''
-        else:
-            records = RSA_decryption(encrypt_records, private) #display the chat records between specific users
-
-    records = records.split('\n')
-    records_html = ''
-    for m in records:
-        content = ":".join(m.split(':')[1:])
-        if m.split(':')[0] == 'u':
-            records_html += f'<div class="outgoing-chats">\n<div class="outgoing-msg">\n<div class="outgoing-chats-msg">\n<p class="received-msg">{content}</p>\n</div>\n</div>\n</div>'
-        elif m.split(':')[0] == 'r':
-            records_html += f'<div class="received-chats">\n<div class="received-msg">\n<div class="received-msg-inbox">\n<p class="single-msg">{content}</p>\n</div>\n</div>\n</div>'
-    
-    return page_view("chat", header='header_chatting', user=username, recipient=recipient, msgs=records_html)
-
-#-----------------------------------------------------------------------------
-# send message
-#-----------------------------------------------------------------------------
-
-def send_msg(msg, username, recipient):
-    # global login_status
-    # if username not in login_status or not login_status[username]:
-    #     return page_view("login", header='header_no_pic')
-    
-    
-    user_public = ''
-    user_private = ''
-    rec_public = ''
-    rec_private = ''
-    with open("key/{}_public.pem".format(username), "rb") as k:
-        user_public = k.read()
-    with open("key/{}_private.pem".format(username), "rb") as k:
-        user_private = k.read()
-    with open("key/{}_public.pem".format(recipient), "rb") as k:
-        rec_public = k.read()
-    with open("key/{}_private.pem".format(recipient), "rb") as k:
-        rec_private = k.read()
-    user_public = rsa.PublicKey._load_pkcs1_pem(user_public)
-    user_private = rsa.PrivateKey._load_pkcs1_pem(user_private)
-    rec_public = rsa.PublicKey._load_pkcs1_pem(rec_public)
-    rec_private = rsa.PrivateKey._load_pkcs1_pem(rec_private)
-
-    decrypt_records = ''
-    decrypt_html = ''
-    ###user to recipient side
-    with open(f'chat_records/{username}_{recipient}', 'rb') as f:
-        records = f.read()
-
-        if records == b'':
-            decrypt_records = []
-        else:
-            decrypt_records = RSA_decryption(records, user_private)
-
-            decrypt_records = decrypt_records.split('\n')
-            for m in decrypt_records:
-                content = ":".join(m.split(':')[1:])
-                if m.split(':')[0] == 'u':
-                    decrypt_html += f'<div class="outgoing-chats">\n<div class="outgoing-msg">\n<div class="outgoing-chats-msg">\n<p class="received-msg">{content}</p>\n</div>\n</div>\n</div>'
-                elif m.split(':')[0] == 'r':
-                    decrypt_html += f'<div class="received-chats">\n<div class="received-msg">\n<div class="received-msg-inbox">\n<p class="single-msg">{content}</p>\n</div>\n</div>\n</div>'
-        
-        if msg == None or msg == '': #if msg is null, display the same page
-            return page_view('chat', header='header_chatting', user=username, recipient=recipient, msgs=decrypt_html)
-
-        decrypt_records.append(f'u:{msg}')
-        decrypt_records = '\n'.join(decrypt_records)
-        decrypt_html += f'<div class="outgoing-chats">\n<div class="outgoing-msg">\n<div class="outgoing-chats-msg">\n<p class="received-msg">{msg}</p>\n</div>\n</div>\n</div>'
+    if login:
+        login_status[unikey] = True
+        output = ""
+        for f in friends:
+            output += f"<a href='/sidebar_chat?uid={unikey}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
                 
-        encrypt_records = RSA_encryption(decrypt_records, user_public)
-
-    with open(f'chat_records/{username}_{recipient}', 'wb') as f:
-        f.write(encrypt_records)
-
-    ###recipient to user side
-    with open(f'chat_records/{recipient}_{username}', 'rb') as f:
-        records = f.read()
-
-        if records == b'':
-            decrypt_records = ''
-        else:
-            decrypt_records = RSA_decryption(records, rec_private)
-
-        decrypt_records = decrypt_records.split('\n')
-        decrypt_records.append(f'r:{msg}')
-        decrypt_records = '\n'.join(decrypt_records)
-                
-        encrypt_records = RSA_encryption(decrypt_records, rec_public)
-
-    with open(f'chat_records/{recipient}_{username}', 'wb') as f:
-        f.write(encrypt_records)
-    
-    return page_view('chat', header='header_chatting', user=username, recipient=recipient, msgs=decrypt_html)
-
-
-#-----------------------------------------------------------------------------
-# About
-#-----------------------------------------------------------------------------
-
-def about(username):
-    '''
-        about
-        Returns the view for the about page
-    '''
-    global login_status
-    if username == None or username not in login_status:
-        return page_view("index")
-    if login_status[username]:
-        return page_view("about", garble=about_garble(), header='header_in', user=username)
+        return page_view('default_sidebar', uid=unikey, username=username, output=output)
     else:
-        return page_view("about", garble=about_garble())
+        return page_view('login_invalid')
 
 #-----------------------------------------------------------------------------
 # Sign up
 #-----------------------------------------------------------------------------
 
-def show_sign_up_page():
-    return page_view("sign_up", header='header_no_pic')
+def register_page():
+    return page_view("register")
 
-#-----------------------------------------------------------------------------
-# Sign up check
-#-----------------------------------------------------------------------------
-
-def sign_up_check(username, password, password_2):
-    if password != password_2:
-        return page_view("invalid", reason="Two passwords are different", header='header_no_pic')
+def register_check(username, unikey, psw, psw2, question, answer):
+    if (psw != psw2) :
+        return page_view('register_invalid', error_msg = "You enter two different password")
     
-    data = None
+    unikey_found = False
+    with open('student.txt', 'r') as f:
+        unikeys = f.read().split('\n')
+        if unikey in unikeys:
+            unikey_found = True
+    if (not unikey_found):
+        with open('staff.txt', 'r') as f:
+            unikeys = f.read().split('\n')
+            if unikey in unikeys:
+                unikey_found = True
+
+    if not unikey_found:
+        return page_view('register_invalid', error_msg = "Invalid Unikey")
+    
     with open('info.json', 'r') as f:
         data = json.load(f)
 
         for row in data['user_info']:
-            if row['username'] == username:
-                return page_view("invalid", reason="Username already exists", header='header_no_pic')
-            
-        salt = salt_generator()
-        Password = hash_calculator(password,salt) ###
-        get_key(username)
-        info = {"username" : username, "password" : Password, "friends" : []}
-        data['user_info'].append(info) #add new user info the file
+            if row['unikey'] == unikey:
+                return page_view('register_invalid', error_msg = "Unikey already exists")
+    
+    salt = salt_generator()
+    Password = hash_calculator(psw,salt)
+
+    info = {"unikey": unikey, "username" : username, "password" : Password, "question":question, "answer": answer,"top_friends":[], "friends" : [], "top_groups":[], "groups" : []}
+    data['user_info'].append(info) #add new user info the file
 
     with open('info.json', 'w') as f:
         json.dump(data, f, indent=2)
 
-    return page_view("sign_up_valid", header='header_no_pic')
+    #create random icon for user
+    icon_path = f"./static/img/user_icon/icon{random.randint(1,5)}.png"
+    dest_path = f"./static/img/user_icon/{unikey}.png"
+    shutil.copyfile(icon_path, dest_path)
+
+    return page_view("register_valid")
 
 #-----------------------------------------------------------------------------
-# logout
+# Reset password
 #-----------------------------------------------------------------------------
 
-def logout(username):
-    
-    global login_status
-    login_status[username] = False
-    return page_view("index")
+def reset_psw():
+    return page_view("reset_psw")
 
-#-----------------------------------------------------------------------------
-# Show add friends page
-#-----------------------------------------------------------------------------
-
-def show_add_friends(username):
-    global login_status
-    if username not in login_status or not login_status[username]:
-        return page_view("login", header='header_no_pic')
-    
-    return page_view('add_friends', header='header_in_no_pic', user=username)
-
-def add_friends_check(username, recipient):
-    data = None
-    friend_exist = False #by default user do not exist
-    if username == recipient:
-        return page_view('invalid', header='header_in_no_pic', user=username, reason='It is user yourself!')
-
+def reset_psw_check(username, unikey, question, answer, psw, psw2):
     with open('info.json', 'r') as f:
         data = json.load(f)
-
+        found = False
+        i = 0
         for row in data['user_info']:
-            if row['username'] == recipient: 
-                friend_exist = True
+            if row['username'] == username and row['unikey'] == unikey and row['question'] == question and row['answer'] == answer:
+                found = True
+                if (psw != psw2):
+                    return page_view('reset_psw_invalid', error_msg='You enter two different passwords')
+                
+                salt = salt_generator()
+                Password = hash_calculator(psw,salt)  
+                data['user_info'][i]['password'] = Password
                 break
-            if row['username'] == username:
-                if recipient in row['friends']: #if the recipient is already user's friend
-                    return page_view('invalid', header='header_in_no_pic', user=username, reason='Username is your friend')
+            i += 1
 
-        if not friend_exist: #if the recipient do not exist
-            return page_view('invalid', header='header_in_no_pic', user=username, reason='Username do not exist')
+        if not found:
+            return page_view('reset_psw_invalid', error_msg='Invalid user details')
+        
+    with open('info.json', 'w') as f:
+        json.dump(data, f, indent=2)
 
-        for i in range(len(data['user_info'])): #no error
-            if data['user_info'][i]['username'] == username:
-                data['user_info'][i]['friends'].append(recipient)
+    return page_view('reset_psw_valid')
 
-            if data['user_info'][i]['username'] == recipient:
-                data['user_info'][i]['friends'].append(username)
+#-----------------------------------------------------------------------------
+# chat page
+#-----------------------------------------------------------------------------
+
+def default(uid, username):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+
+    return page_view("default_sidebar", uid=uid, username=username, output=output)
+
+def chat_page(uid, username, target_id, target_name):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+        
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                content = ":".join(m.split(':')[1:])
+                if m.split(':')[0] == uid:
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>' 
+                    else:
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{content}</p></div></div></div>'
+                else:
+                    t_uid = m.split(':')[0]
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div></div>'
+                    else:
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+    
+    
+    return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+
+def send_msg(msg, uid, username, target_id, target_name):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                content = ":".join(m.split(':')[1:])
+                if m.split(':')[0] == uid:
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>' 
+                    else:
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{content}</p></div></div></div>'
+                else:
+                    t_uid = m.split(':')[0]
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>'
+                    else:
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+        
+        if msg == None or msg == '':
+            return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+        
+        decrypt_msg.append(f'{uid}:{msg}')
+        decrypt_msg = '\n'.join(decrypt_msg)
+        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{msg}</p></div></div></div>'
+
+        encrypt_msg = RSA_encryption(decrypt_msg, public)
+    
+    with open(f'chat_records/{uid}_{target_id}', 'wb') as f:
+        f.write(encrypt_msg)
+
+    if target_id.isnumeric():
+        members = []
+        for row in data['group_info']:
+            if (str(row['id']) == target_id):
+                members = row['members']
+                break
+        print(members)
+        for m in members:
+            if m ==uid: continue
+
+            with open(f'chat_records/{m}_{target_id}', 'rb') as f:
+                records = f.read()
+
+                if records == b'':
+                    decrypt_records = ''
+                else:
+                    decrypt_records = RSA_decryption(records, private)
+                
+                decrypt_records = decrypt_records.split('\n')
+                decrypt_records.append(f'{uid}:{msg}')
+                decrypt_records = '\n'.join(decrypt_records)
+
+                encrypt_records = RSA_encryption(decrypt_records, public)
+            
+            with open(f'chat_records/{m}_{target_id}', 'wb') as f:
+                f.write(encrypt_records)
+
+        return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+    
+    with open(f'chat_records/{target_id}_{uid}', 'rb') as f:
+        records = f.read()
+
+        if records == b'':
+            decrypt_records = ''
+        else:
+            decrypt_records = RSA_decryption(records, private)
+        
+        decrypt_records = decrypt_records.split('\n')
+        decrypt_records.append(f'{uid}:{msg}')
+        decrypt_records = '\n'.join(decrypt_records)
+
+        encrypt_records = RSA_encryption(decrypt_records, public)
+    
+    with open(f'chat_records/{target_id}_{uid}', 'wb') as f:
+        f.write(encrypt_records)
+
+    return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+
+def sendimg(uid, username, target_id, target_name, imgpath):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                content = ":".join(m.split(':')[1:])
+                if m.split(':')[0] == uid:
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>' 
+                    else:
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{content}</p></div></div></div>'
+                else:
+                    t_uid = m.split(':')[0]
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>'
+                    else:
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+
+        decrypt_msg.append(f'{uid}:\\image:{imgpath}')
+        decrypt_msg = '\n'.join(decrypt_msg)
+        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{imgpath}"></p></div>'
+
+        encrypt_msg = RSA_encryption(decrypt_msg, public)
+
+    with open(f'chat_records/{uid}_{target_id}', 'wb') as f:
+        f.write(encrypt_msg)
+
+    if target_id.isnumeric():
+        members = []
+        for row in data['group_info']:
+            if (str(row['id']) == target_id):
+                members = row['members']
+                break
+        
+        for m in members:
+            if m ==uid: continue
+            with open(f'chat_records/{m}_{target_id}', 'rb') as f:
+                records = f.read()
+
+                if records == b'':
+                    decrypt_records = ''
+                else:
+                    decrypt_records = RSA_decryption(records, private)
+                
+                decrypt_records = decrypt_records.split('\n')
+                decrypt_records.append(f'{uid}:\\image:{imgpath}')
+                decrypt_records = '\n'.join(decrypt_records)
+
+                encrypt_records = RSA_encryption(decrypt_records, public)
+            
+            with open(f'chat_records/{m}_{target_id}', 'wb') as f:
+                f.write(encrypt_records)
+        return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+
+    with open(f'chat_records/{target_id}_{uid}', 'rb') as f:
+        records = f.read()
+
+        if records == b'':
+            decrypt_records = ''
+        else:
+            decrypt_records = RSA_decryption(records, private)
+        
+        decrypt_records = decrypt_records.split('\n')
+        decrypt_records.append(f'{uid}:\\image:{imgpath}')
+        decrypt_records = '\n'.join(decrypt_records)
+
+        encrypt_records = RSA_encryption(decrypt_records, public)
+    
+    with open(f'chat_records/{target_id}_{uid}', 'wb') as f:
+        f.write(encrypt_records)
+
+    return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+
+def sendvideo(uid, username, target_id, target_name, videopath):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+        
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                content = ":".join(m.split(':')[1:])
+                if m.split(':')[0] == uid:
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>' 
+                    else:
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{content}</p></div></div></div>'
+                else:
+                    t_uid = m.split(':')[0]
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>'
+                    else:
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+
+        decrypt_msg.append(f'{uid}:\\video:{videopath}')
+        decrypt_msg = '\n'.join(decrypt_msg)
+        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{videopath}" type="video/mp4"><source src="{".".join(videopath.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>'
+
+        encrypt_msg = RSA_encryption(decrypt_msg, public)
+
+    with open(f'chat_records/{uid}_{target_id}', 'wb') as f:
+        f.write(encrypt_msg)
+
+    if target_id.isnumeric():
+        members = []
+        for row in data['group_info']:
+            if (str(row['id']) == target_id):
+                members = row['members']
+                break
+        
+        for m in members:
+            if m ==uid: continue
+
+            with open(f'chat_records/{m}_{target_id}', 'rb') as f:
+                records = f.read()
+
+                if records == b'':
+                    decrypt_records = ''
+                else:
+                    decrypt_records = RSA_decryption(records, private)
+                
+                decrypt_records = decrypt_records.split('\n')
+                decrypt_records.append(f'{uid}:\\video:{videopath}')
+                decrypt_records = '\n'.join(decrypt_records)
+
+                encrypt_records = RSA_encryption(decrypt_records, public)
+            
+            with open(f'chat_records/{m}_{target_id}', 'wb') as f:
+                f.write(encrypt_records) 
+
+        return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+    
+    with open(f'chat_records/{target_id}_{uid}', 'rb') as f:
+        records = f.read()
+
+        if records == b'':
+            decrypt_records = ''
+        else:
+            decrypt_records = RSA_decryption(records, private)
+        
+        decrypt_records = decrypt_records.split('\n')
+        decrypt_records.append(f'{uid}:\\video:{videopath}')
+        decrypt_records = '\n'.join(decrypt_records)
+
+        encrypt_records = RSA_encryption(decrypt_records, public)
+    
+    with open(f'chat_records/{target_id}_{uid}', 'wb') as f:
+        f.write(encrypt_records) 
+
+    return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
+
+def chat_setting(uid, username, target_id, target_name):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        check = ''
+        friends = []
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends += row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+                if target_id.isnumeric() and target_id in row['top_groups']: check = "checked"
+                elif (not target_id.isnumeric()) and target_id in row['top_friends']: check = "checked"
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                content = ":".join(m.split(':')[1:])
+                if m.split(':')[0] == uid:
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src="img/user_icon/{uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>' 
+                    else:
+                        decrypt_html += f'<div class="outgoing-chats"><div class="outgoing-chats-img"><img src ="img/user_icon/{uid}.png"></div><div class="outgoing-msg"><div class="outgoing-chats-msg"><p>{content}</p></div></div></div>'
+                else:
+                    t_uid = m.split(':')[0]
+                    if m.split(':')[1] == '\\image':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><img src="{path}"></p></div>'
+                    elif m.split(':')[1] == '\\video':
+                        path = m.split(':')[2]
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><p><video controls><source src="{path}" type="video/mp4"><source src="{".".join(path.split(".")[:-1])}.ogg" type="video/ogg"></video></p></div>'
+                    else:
+                        decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+
+    return page_view("sidebar_chat_setting", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html, checked=check)
+
+def add_group_page(uid, username):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['friends']
+
+    friend_checkbox = ''
+    selected_friend = ''
+    i = 0
+    for f in friends:
+        friend_checkbox += f'<li><label class="container"><div class="font">{dict[f]}</div><img src="img/user_icon/{f}.png"/><input type="checkbox" name="checkbox{i}" value="{f}" id="myCheck{i}" onclick="checkBox()"> <span class="checkmark"></span></label></li>'
+        selected_friend += f'<span id= "myCheck{i}_output" style= "display:none"><img src="img/user_icon/{f}.png"/>{dict[f]}</span>'
+        i += 1
+
+    return page_view("sidebar_add_group", uid=uid, username=username, friend_checkbox=friend_checkbox, selected_friend=selected_friend, num=i)
+
+def add_group(uid, username, result, groupname):
+    group_id = 0
+    with open("group_num.txt", 'r') as f:
+        group_id = int(f.read())
+    with open("group_num.txt", 'w') as f:
+        f.write(str(group_id+1))
+    
+    for u in result:
+        with open(f"chat_records/{u}_{group_id}", 'w') as f:
+            pass
+    
+    with open("info.json", 'r') as f:
+        data = json.load(f)
+    
+    group_info = {"id":str(group_id), "name":groupname, "members":result}
+    data['group_info'].append(group_info)
+
+    for i in range(len(data['user_info'])):
+        if data['user_info'][i]['unikey'] in result:
+            data['user_info'][i]['groups'].append(str(group_id))
+
+    with open("info.json", 'w') as f:
+        json.dump(data, f, indent=2)
+
+    icon_path = f"./static/img/user_icon/icon{random.randint(1,5)}.png"
+    dest_path = f"./static/img/user_icon/{group_id}.png"
+
+    shutil.copyfile(icon_path, dest_path)
+
+    dict = {}
+    friends = []
+    for row in data['user_info']:
+        dict[row['unikey']] = row['username']
+        if row['unikey'] == uid:
+            friends += row['groups']
+            friends += row['friends']
+    
+    for row in data['group_info']:
+        dict[row['id']] = row['name']
+    
+
+
+    output = ""
+    for f in friends:
+        output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+
+
+    
+    return page_view('default_sidebar', uid=uid, username=username, output=output)
+
+def chat_history_page(uid, username, target_id, target_name):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        check = ''
+        friends = []
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends += row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+                if target_id.isnumeric() and target_id in row['top_groups']: check = "checked"
+                elif (not target_id.isnumeric()) and target_id in row['top_friends']: check = "checked"
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    return page_view("sidebar_chat_history", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, checked=check, msgs='')
+
+def chat_history(uid, username, target_id, target_name, search_word):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        check = ''
+        friends = []
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends += row['top_groups']
+                friends += row['top_friends']
+                for g in row['groups']:
+                    if g not in row['top_groups']: friends.append(g)
+                for f in row['friends']:
+                    if f not in row['top_friends']: friends.append(f)
+                if target_id.isnumeric() and target_id in row['top_groups']: check = "checked"
+                elif (not target_id.isnumeric()) and target_id in row['top_friends']: check = "checked"
+
+        for row in data['group_info']:
+            dict[row['id']] = row['name']
+
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png'/><div class='name'>{dict[f]}</div></li></a>"
+
+    public = ''
+    private = ''
+    with open("server_public.pem", "rb") as k:
+        public = k.read()
+    with open("server_private.pem", "rb") as k:
+        private = k.read()
+    public = rsa.PublicKey._load_pkcs1_pem(public)
+    private = rsa.PrivateKey._load_pkcs1_pem(private)
+
+    decrypt_msg = ''
+    decrypt_html = ''
+
+    with open(f"chat_records/{uid}_{target_id}", 'rb') as f:
+        record = f.read()
+        if (record == b''):
+            decrypt_msg = []
+        else:
+            decrypt_msg = RSA_decryption(record, private)
+            decrypt_msg = decrypt_msg.split('\n')
+            for m in decrypt_msg:
+                if m == '': continue
+                if m.split(':')[1] == '\\image' or m.split(':')[1] == '\\video': continue
+                id = m.split(":")[0]
+                content = ":".join(m.split(':')[1:])
+
+                if search_word in content:
+                    decrypt_html += f'<div class="received-chats" style="margin-top: 20; margin-bottom: -10;"><div class="received-chats-img"><img src="img/user_icon/{id}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
+
+
+    return page_view("sidebar_chat_history", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, checked=check, msgs=decrypt_html)
+
+#-----------------------------------------------------------------------------
+# contact page
+#-----------------------------------------------------------------------------
+
+def contact_page(uid, username):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['friends']
+    output = ""
+    for f in friends:
+        output += f"<li class='friend'><img src='img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li>"
+
+    return page_view("sidebar_contact", uid=uid, username=username, output=output)
+
+def add_friends_page(uid, username):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        usernames = []
+        unikeys = []
+        for row in data['user_info']:
+            if row['unikey'] == uid:
+                continue
+            usernames.append(row['username'])
+            unikeys.append(row['unikey'])
+    users = "<ul id='friend-list'>"
+    for i in range(len(unikeys)):
+        users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
+    users += "</ul>"
+    
+    return page_view("sidebar_add_friends", uid=uid, username=username, users=users)
+
+def add_friend(uid, username, target_id, target_name):
+    with open(f'chat_records/{uid}_{target_id}', 'w') as f:
+        f.write('')
+    with open(f'chat_records/{target_id}_{uid}', 'w') as f:
+        f.write('')
+    
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        for i in range(len(data['user_info'])):
+            if data['user_info'][i]['unikey'] == uid:
+                data['user_info'][i]['friends'].append(target_id)
+            elif data['user_info'][i]['unikey'] == target_id:
+                data['user_info'][i]['friends'].append(uid)
+
+    
+    with open('info.json', 'w') as f:
+        json.dump(data, f, indent=2)
+    
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        dict = {}
+        for row in data['user_info']:
+            dict[row['unikey']] = row['username']
+            if row['unikey'] == uid:
+                friends = row['friends']
+    output = ""
+    for f in friends:
+        if f == target_id: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend selected'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+        else: output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+    
+    return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, msgs='', output=output)
+    
+def unfriend(uid, username, target_id, target_name):
+    os.remove(f"chat_records/{uid}_{target_id}")
+    os.remove(f"chat_records/{target_id}_{uid}")
+
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        for i in range(len(data['user_info'])):
+            if data['user_info'][i]['unikey'] == uid:
+                data['user_info'][i]['friends'].remove(target_id)
+            elif data['user_info'][i]['unikey'] == target_id:
+                data['user_info'][i]['friends'].remove(uid)
 
     with open('info.json', 'w') as f:
         json.dump(data, f, indent=2)
 
-    with open(f'chat_records/{username}_{recipient}', 'wb') as f:
-        f.write(b'')
-    with open(f'chat_records/{recipient}_{username}', 'wb') as f:
-        f.write(b'')
-
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        usernames = []
+        unikeys = []
+        user_friends = []
+        for row in data['user_info']:
+            if row['unikey'] == uid:
+                user_friends = row['friends']
+                continue
+            usernames.append(row['username'])
+            unikeys.append(row['unikey'])
     
-    return page_view('add_valid', header='header_in_no_pic', user=username)
+    users = "<ul id='friend-list'>"
+    for i in range(len(unikeys)):
+        if unikeys[i] == target_id: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend selected'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
+        else: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
+    users += "</ul>"
 
-# Returns a random string each time
-def about_garble():
-    '''
-        about_garble
-        Returns one of several strings for the about page
-    '''
-    garble = ["leverage agile frameworks to provide a robust synopsis for high level overviews.", 
-    "iterate approaches to corporate strategy and foster collaborative thinking to further the overall value proposition.",
-    "organically grow the holistic world view of disruptive innovation via workplace change management and empowerment.",
-    "bring to the table win-win survival strategies to ensure proactive and progressive competitive domination.",
-    "ensure the end of the day advancement, a new normal that has evolved from epistemic management approaches and is on the runway towards a streamlined cloud solution.",
-    "provide user generated content in real-time will have multiple touchpoints for offshoring."]
-    return garble[random.randint(0, len(garble) - 1)]
+    main = f'<div class="header"><h1 style="text-align: center; margin-top: 50; margin-right: 100; font-size: 50;">{target_name}</h1><ul><img src=\'img/user_icon/{target_id}.png\' style="width:150; height: 150; float: right; margin-right: 100; margin-top: -130; object-fit:scale-down;"/></ul></div>'
+    if target_id in user_friends:
+        main += f'<a href="/sidebar_chat?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: aqua;">Message</button></a> <a href="/unfriend?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: rgb(227, 68, 68);">Unfriend</button></a>'
+    else:
+        main += f'<a href="/add_friend?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: aqua; width: auto;">Add friend</button></a>'
+
+    return page_view("sidebar_user_detail", uid=uid, username=username, target_id=target_id, target_name=target_name, users=users, main=main)
+
+def user_detail(uid, username, target_id, target_name):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        usernames = []
+        unikeys = []
+        user_friends = []
+        for row in data['user_info']:
+            if row['unikey'] == uid:
+                user_friends = row['friends']
+                continue
+            usernames.append(row['username'])
+            unikeys.append(row['unikey'])
+    
+    users = "<ul id='friend-list'>"
+    for i in range(len(unikeys)):
+        if unikeys[i] == target_id: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend selected'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
+        else: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
+    users += "</ul>"
+
+    main = f'<div class="header"><h1 style="text-align: center; margin-top: 50; margin-right: 100; font-size: 50;">{target_name}</h1><ul><img src=\'img/user_icon/{target_id}.png\' style="width:150; height: 150; float: right; margin-right: 100; margin-top: -130; object-fit:scale-down;"/></ul></div>'
+    if target_id in user_friends:
+        main += f'<a href="/sidebar_chat?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: aqua;">Message</button></a> <a href="/unfriend?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: rgb(227, 68, 68);">Unfriend</button></a>'
+    else:
+        main += f'<a href="/add_friend?uid={uid}&username={username}&target_id={target_id}&target_name={target_name}" style="text-decoration: none;"><button style="background-color: aqua; width: auto;">Add friend</button></a>'
+
+    return page_view("sidebar_user_detail", uid=uid, username=username, target_id=target_id, target_name=target_name, users=users, main=main)
+
+#-----------------------------------------------------------------------------
+# forum page
+#-----------------------------------------------------------------------------
+
+def forum_page(uid, username):
+    return page_view("sidebar_forum", uid=uid, username=username)
+
+#-----------------------------------------------------------------------------
+# setting page
+#-----------------------------------------------------------------------------
+
+def setting_page(uid, username):
+    return page_view("sidebar_setting", uid=uid, username=username)
+
+def update_name_page(uid, username):
+    return page_view("sidebar_update_name", uid=uid, username=username)
+
+def update_name(uid, username, newname):
+    with open('info.json', 'r') as f:
+        data = json.load(f)
+        for i in range(len(data['user_info'])):
+            if data['user_info'][i]['unikey'] == uid:
+                data['user_info'][i]['username'] = newname
+                break
+    
+    with open('info.json', 'w') as f:
+        json.dump(data, f, indent=2)
+
+    return page_view("sidebar_setting", uid=uid, username=newname)
 
 
 #-----------------------------------------------------------------------------
@@ -366,6 +1009,7 @@ def handle_errors(error):
     return page_view("error", error_type=error_type, error_msg=error_msg)
 
 
+
 def salt_generator():
     random_str = " "
     base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789"
@@ -385,15 +1029,6 @@ def hash_calculator(msg,salt):
     bs = obj.hexdigest()
     ls1 = [bs,salt]
     return ls1
-
-def get_key(username):
-    key_name = username
-    (public, private) = rsa.newkeys(2048)
-    with open("key/{}_public.pem".format(key_name), "wb") as f:
-        f.write(public._save_pkcs1_pem())
-
-    with open("key/{}_private.pem".format(key_name), "wb") as f:
-        f.write(private._save_pkcs1_pem())
 
 def RSA_encryption(txt, key): #seperate plaintext into several chuncks
     result = []

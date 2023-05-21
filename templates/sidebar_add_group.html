@@ -1,7 +1,7 @@
 <head>
 <script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="./../static/css/sidebar.css">
-<link rel="stylesheet" href="./../static/css/checkbox.css">
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/checkbox.css">
 </head>
 
 <script>
@@ -29,13 +29,13 @@ function checkBox() {
   var count = 0;
   var inputElems = document.getElementsByTagName("input");
 
-  for (var i=1; i<inputElems.length; i++){
+  for (var i=1; i<inputElems.length-1; i++){
     if (inputElems[i].type === "checkbox" && inputElems[i].checked === true){
       count++;
     }
     // Get the checkbox
-    var checkBox = document.getElementById(`myCheck${i}`);
-    output = document.getElementById(`myCheck${i}_output`);
+    var checkBox = document.getElementById(`myCheck${i-1}`);
+    output = document.getElementById(`myCheck${i-1}_output`);
     if (checkBox.checked == true){
       output.style.display = "block";
     } 
@@ -44,71 +44,44 @@ function checkBox() {
     }
   }
 
-  document.getElementById("selected").innerHTML = `${count} selected`;
+  document.getElementById("choosen").innerHTML = `${count} selected`;
 }
 </script>
 
 <!-- The sidebar -->
 <div class="sidebar">
 
-  <a href="#setting"><img src="./../user_icon/test_icon.png" class="image" style="width:60px;height:60px;">
-  <a href="#chat"><i class="far fa-comment"></i></a>
-  <a href="#contact"><i class="far fa-address-book"></i></a>
-  <a href="#forum"><i class="fa-regular fa-comments"></i></a>
-  <a href="#setting"><i class="fas fa-cog"></i></a>
-  <a href="#logout"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
+  <a href="/sidebar_setting?uid=${uid}&username=${username}"><img src="/img/user_icon/${uid}.png" class="image" style="width:60px;height:60px;">
+    <a href="/default_sidebar?uid=${uid}&username=${username}"><i class="fas fa-comment"></i></a>
+    <a href="/sidebar_contact?uid=${uid}&username=${username}"><i class="far fa-address-book"></i></a>
+    <a href="/sidebar_forum?uid=${uid}&username=${username}"><i class="fa-regular fa-comments"></i></a>
+    <a href="/sidebar_setting?uid=${uid}&username=${username}"><i class="fas fa-cog"></i></a>
+    <a href="/login?uid=${uid}&username=${username}"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
 </div>
 
 <div class="search_group">
-  <a href="/contact"><i class="fa-regular fa-rectangle-xmark fa-2xs"></i></a>
+  <a href="/default_sidebar?uid=${uid}&username=${username}"><i class="fa-regular fa-rectangle-xmark fa-2xs"></i></a>
   <input type="text" placeholder="Search..." id="Input" onkeyup="dynamic_search()">
 </div>
 
 <!-- <img src='./../user_icon/icon1.png' /> -->
 <!-- different name when implementing -->
 
-<form action="/contact", method="post">
+<form action="/add_group?uid=${uid}&username=${username}&num=${num}", method="post">
   <ul id="myUL">
-  <li><label class="container">
-    <div class="font">One</div>
-    <img src='./../user_icon/icon1.png' />
-    <input type="checkbox" name="checkbox" value="one" id="myCheck1" onclick="checkBox()"> 
-    <span class="checkmark"></span>
-    </label></li>
-  
-  <li><label class="container">
-    <div class="font">Two</div>
-    <img src='./../user_icon/icon2.png' />
-    <input type="checkbox" name="checkbox" value="two" id="myCheck2" onclick="checkBox()">
-    <span class="checkmark"></span>
-  </label></li>
 
-  <li><label class="container">
-    <div class="font">Three</div>
-    <img src='./../user_icon/icon3.png' />
-    <input type="checkbox" name="checkbox" value="three" id="myCheck3" onclick="checkBox()">
-    <span class="checkmark"></span>
-  </label></li>
-
-  <li><label class="container">
-    <div class="font">Four</div>
-    <img src='./../user_icon/icon1.png' />
-    <input type="checkbox" name="checkbox" value="four" id="myCheck4" onclick="checkBox()">
-    <span class="checkmark"></span>
-  </label></li>
+  ${friend_checkbox}
+  <input type="text" name="groupname" placeholder="Enter your group name" style="font-size: 30; top: 30; left: 750; position:absolute; z-index: 1;" required>
   </ul>
   <button type="submit" style="background-color: aquamarine;top: 650;left: 1200;font-size: 30; position: absolute; z-index: 1;">Create</button>
 </form>
 
-<button style="background-color: rgb(226, 62, 62);top: 650; left: 1050;font-size: 30; position: absolute; z-index: 1;" onclick="window.location.href='/contact'">Cancel</button>
+<button style="background-color: rgb(226, 62, 62);top: 650; left: 1050;font-size: 30; position: absolute; z-index: 1;" onclick="window.location.href='/default_sidebar?uid=${uid}&username=${username}'">Cancel</button>
 
 <div class="main">
   <h1>Create group chat</h1>
-  <h3 id = "selected">0 selected</h3>
+  <h3 id="choosen">0 selected</h3>
 
-  <span id= "myCheck1_output" style= "display:none"><img src='./../user_icon/icon1.png'/>one</span>
-  <span id= "myCheck2_output" style= "display:none"><img src='./../user_icon/icon2.png'/>two</span>
-  <span id= "myCheck3_output" style= "display:none"><img src='./../user_icon/icon3.png'/>three</span>
-  <span id= "myCheck4_output" style= "display:none"><img src='./../user_icon/icon1.png'/>four</span>
+  ${selected_friend}
 
 </div>

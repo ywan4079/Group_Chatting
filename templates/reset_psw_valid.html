@@ -1,0 +1,39 @@
+<head>
+<script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="css/input.css">
+</head>
+
+<div class="container">
+  <form action="/reset_psw" method="post">
+    <h1 class="center">Reset your password</h1>
+    <div class="box_header"><label for="uname"><b>Username</b></label></div>
+    <input type="text" placeholder="Enter username" name="username" required>
+
+    <div class="box_header"><label for="uname"><b>Unikey</b></label></div>
+    <input type="text" placeholder="Enter Unikey" name="unikey" required>
+
+    <div class="box_header"><label for="uname"><b>Password reset questions</b></label></div>
+
+    <div class="dropdown">
+      <select name="questions" id="questions">
+        <option value="q1">What is your nickname?</option>
+        <option value="q2">What is the name of your first pet?</option>
+        <option value="q3">What was your favorite subject in high school?</option>
+        <option value="q4">Where did you go on your favorite vacation as a child?</option>
+        <option value="q5">What is the name of the road you grew up on?</option>
+      </select>
+    </div>
+    <input type="text" placeholder="Enter your answer" name="answer" required>
+
+    <div class="box_header"><label for="psw"><b>New password</b></label></div>
+    <input type="password" placeholder="Enter Password" name="npsw" required>
+    <div class="box_header"><label for="psw"><b>Comfirm new password</b></label></div>
+    <input type="password" placeholder="Comfirm password" name="npsw2" required>
+
+    <a style="margin-left: 330; font-size: 20; color: rgb(90, 233, 90); text-decoration: none;" href="/login">Success! Click to login</a>
+    <div class="center">
+      <button type="submit">Submit</button>
+    </div>
+  </form>
+
+</div>

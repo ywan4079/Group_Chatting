@@ -81,13 +81,14 @@ img {
 /* Styling the input field */
     .input-group {
         float: right;
-        margin-top: 15px;
-        margin-right: 25px;
+        margin-right: 25px; 
+        margin-top: 15;
         outline: none !important;
         border-radius: 20px;
         width: 68% !important;
         height: 50;
         padding-top: 5;
+        padding-right: 100;
         background-color: #fff;
         position: relative;
         display: flex;
@@ -147,7 +148,7 @@ img {
     }
 
 /* Styling the avatar  */
-received-chats-img {
+.received-chats-img {
     display: inline-block;
     width: 50px;
 }
@@ -179,15 +180,15 @@ received-chats-img {
 .received-chats p img {
     width: auto;
     height: auto;
-    max-width: 600;
-    max-height: 500;
+    max-width: 500;
+    max-height: 400;
 }
 
 .received-chats p video {
     width: auto;
     height: auto;
-    max-width: 600;
-    max-height: 500;
+    max-width: 500;
+    max-height: 400;
 }
 
 .outgoing-chats {
@@ -211,16 +212,16 @@ received-chats-img {
     width: auto;
     height: auto;
     float: right;
-    max-width: 600;
-    max-height: 500;
+    max-width: 500;
+    max-height: 400;
 }
 
 .outgoing-chats p video {
     width: auto;
     height: auto;
     float: right;
-    max-width: 600;
-    max-height: 500;
+    max-width: 500;
+    max-height: 400;
 }
 
 .outgoing-chats-msg {

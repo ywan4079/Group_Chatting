@@ -1,39 +1,30 @@
 
 import model
 import rsa
+import os
 
 public = ''
 private = ''
 
+def get_key(username):
+    key_name = username
+    (public, private) = rsa.newkeys(2048)
+    with open("key/{}_public.pem".format(key_name), "wb") as f:
+        f.write(public._save_pkcs1_pem())
 
-# def RSA_encryption(txt, key): #seperate plaintext into several chuncks
-#     result = []
-#     for n in range(0,len(txt),245):
-#         chuncks = txt[n:n+245]
-#         result.append( rsa.encrypt(chuncks.encode(), key) )
-#     return b''.join(result)
+    with open("key/{}_private.pem".format(key_name), "wb") as f:
+        f.write(private._save_pkcs1_pem())
 
-# def RSA_decryption(content, key):
-#     result = []
-#     for n in range(0,len(content),256):
-#         chuncks = content[n:n+256]
-#         result.append( rsa.decrypt(chuncks, key).decode() )
-#     return ''.join(result)
+def get_key(username):
+    key_name = username
+    (public, private) = rsa.newkeys(2048)
+    with open("key/{}_public.pem".format(key_name), "wb") as f:
+        f.write(public._save_pkcs1_pem())
 
-# with open('key/demo_public.pem', 'rb') as f:
-#     public = f.read()
+    with open("key/{}_private.pem".format(key_name), "wb") as f:
+        f.write(private._save_pkcs1_pem())
 
-# with open('key/demo_private.pem', 'rb') as f:
-#     private = f.read()
-
-# public = rsa.PublicKey._load_pkcs1_pem(public)
-# private = rsa.PrivateKey._load_pkcs1_pem(private)
-
-# plaintext = 'asdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgsdfbergwfsdvsdfgrdasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdgasdfgthjyhregfsdverdscverdg'
-
-# encrypt = RSA_encryption(plaintext, public)
-# decrypt = RSA_decryption(encrypt, private)
-# print(plaintext == decrypt)
-
-str = 'ewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefwewevdewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefweweewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefwewedewfdwefweffddsvferfwsdvfbggrefwdsvgtgrfdvbgrfedscvfbgterfwdscvfbgrefwdsvfbgfwedcsvfegrfwdsvffewcdsvfgfswefwefwefwefwefwfwefwefwefwewe'
-print(len(str))
+files = os.listdir('chat_records')
+for f in files[1:]:
+    with open(f'chat_records/{f}', 'wb')as f:
+        f.write(b'')

@@ -1,7 +1,38 @@
 <head>
 <script src="https://kit.fontawesome.com/712702fa6e.js" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="./../static/css/sidebar.css">
+<link rel="stylesheet" href="css/sidebar.css">
 </head>
+
+<style>
+  .upload-btn-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  margin-left: 150;
+  margin-top: 150;
+  margin-bottom: -50;
+  width: auto;
+  cursor: pointer;
+}
+
+.btn {
+  /* border: 2px solid gray; */
+  color: black;
+  background-color:aquamarine;
+  padding: 8px 20px;
+  font-size: 40px;
+}
+
+.upload-btn-wrapper input[type=file] {
+  font-size: 50;
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  width: auto;
+}
+</style>
+
 
 <script>
   function dynamic_search() {
@@ -28,17 +59,24 @@
 <!-- The sidebar -->
 <div class="sidebar">
 
-  <a href="#setting"><img src="./../user_icon/test_icon.png" class="image" style="width:60px;height:60px;">
-  <a href="#chat"><i class="far fa-comment"></i></a>
-  <a href="#contact"><i class="far fa-address-book"></i></a>
-  <a href="#forum"><i class="fa-regular fa-comments"></i></a>
-  <a href="#setting"><i class="fas fa-cog"></i></a>
-  <a href="#logout"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
+  <a href="/sidebar_setting?uid=${uid}&username=${username}"><img src="/img/user_icon/${uid}.png" class="image" style="width:60px;height:60px;">
+    <a href="/default_sidebar?uid=${uid}&username=${username}"><i class="far fa-comment"></i></a>
+    <a href="/sidebar_contact?uid=${uid}&username=${username}"><i class="far fa-address-book"></i></a>
+    <a href="/sidebar_forum?uid=${uid}&username=${username}"><i class="fa-regular fa-comments"></i></a>
+    <a href="/sidebar_setting?uid=${uid}&username=${username}"><i class="fas fa-cog"></i></a>
+    <a href="/login?uid=${uid}&username=${username}"><i class="fa-sharp fa-solid fa-right-from-bracket"></i></a>
 </div>
 
 
-<img src="./../user_icon/test_icon.png" style="width: 250; height: 250; margin: 30; margin-left: 150; border: 2 solid lightgrey; display: inline;"/>
-<h1 style="font-size: 60; text-align: center; margin-top: -200;">user1</h1>
-<button style="width: auto; height: 60; margin-top: 150; margin-left: 150; margin-bottom: -80; font-size: 40; display: block; background-color: aquamarine;">Upload new icon</button>
-<button style="width: auto; height: 60; margin-top: 130; margin-left: 150; margin-bottom: -80; font-size: 40; display: block; background-color: aquamarine;">Remove current icon</button>
-<button style="width: auto; height: 60; margin-top: 130; margin-left: 150; font-size: 40; display: block; background-color: aquamarine;">Update your name</button>
+<img src="img/user_icon/${uid}.png" style="width: 250; height: 250; margin: 30; margin-left: 150; border: 2 solid lightgrey; display: inline;"/>
+<h1 style="font-size: 60; text-align: center; margin-top: -200;">${username}</h1>
+
+<form action="/uploadimg?uid=${uid}&username=${username}" method="post" enctype="multipart/form-data">
+  <div class="upload-btn-wrapper">
+    <button class="btn">Upload a image</button>
+    <input type="file" name="uploadimage" accept="image/png" onchange="this.form.submit()"/>
+  </div>
+  
+</form>
+
+<a href="/update_name_page?uid=${uid}&username=${username}" style="text-decoration: none;"><button style="width: auto; height: 60; margin-top: 130; margin-left: 150; font-size: 40; display: block; background-color: aquamarine;">Update your name</button></a>
