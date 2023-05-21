@@ -44,11 +44,15 @@ def login_check(unikey, psw):
                 if pwd_hash == row['password'][0]: #both correct
                     login = True
                     username = row['username']
-                    friends += row['groups']
-                    friends += row['friends']
+                    friends += row['top_groups']
+                    friends += row['top_friends']
+                    for g in row['groups']:
+                        if g not in row['top_groups']: friends.append(g)
+                    for f in row['friends']:
+                        if f not in row['top_friends']: friends.append(f)
+
         for row in data['group_info']:
-            dict[row['id']] = row['name']
-                    
+            dict[row['id']] = row['name']               
     
     if login:
         login_status[unikey] = True
@@ -598,6 +602,8 @@ def sendvideo(uid, username, target_id, target_name, videopath):
     return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html)
 
 def chat_setting(uid, username, target_id, target_name):
+    if target_id.isnumeric(): u_or_q = "Quit group"
+    else: u_or_q = "Unfriend"
     with open('info.json', 'r') as f:
         data = json.load(f)
         dict = {}
@@ -665,7 +671,7 @@ def chat_setting(uid, username, target_id, target_name):
                     else:
                         decrypt_html += f'<div class="received-chats"><div class="received-chats-img"><img src="img/user_icon/{t_uid}.png"></div><div class="received-msg"><div class="received-msg-inbox"><p>{content}</p></div></div></div>'
 
-    return page_view("sidebar_chat_setting", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html, checked=check)
+    return page_view("sidebar_chat_setting", uid=uid, username=username, target_id=target_id, target_name=target_name, output=output, msgs=decrypt_html, checked=check, u_or_q=u_or_q)
 
 def add_group_page(uid, username):
     with open('info.json', 'r') as f:
@@ -889,19 +895,62 @@ def add_friend(uid, username, target_id, target_name):
     return page_view("sidebar_chat", uid=uid, username=username, target_id=target_id, target_name=target_name, msgs='', output=output)
     
 def unfriend(uid, username, target_id, target_name):
-    os.remove(f"chat_records/{uid}_{target_id}")
-    os.remove(f"chat_records/{target_id}_{uid}")
 
-    with open('info.json', 'r') as f:
-        data = json.load(f)
-        for i in range(len(data['user_info'])):
-            if data['user_info'][i]['unikey'] == uid:
-                data['user_info'][i]['friends'].remove(target_id)
-            elif data['user_info'][i]['unikey'] == target_id:
-                data['user_info'][i]['friends'].remove(uid)
+    if (target_id.isnumeric()):
+        os.remove(f"chat_records/{uid}_{target_id}")
+        with open('info.json', 'r') as f:
+            data = json.load(f)
+            for i in range(len(data['user_info'])):
+                if data['user_info'][i]['unikey'] == uid:
+                    data['user_info'][i]['groups'].remove(target_id)
+                    if target_id in data['user_info'][i]['top_groups']: data['user_info'][i]['top_groups'].remove(target_id)
 
-    with open('info.json', 'w') as f:
-        json.dump(data, f, indent=2)
+            for i in range(len(data['group_info'])):
+                if data['group_info'][i]['id'] == target_id:
+                    data['group_info'][i]['members'].remove(uid)
+                    break
+
+        with open('info.json', 'w') as f:
+            json.dump(data, f, indent=2)
+
+        with open('info.json', 'r') as f:
+            data = json.load(f)
+            dict = {}
+            for row in data['user_info']:
+                dict[row['unikey']] = row['username']
+                if row['unikey'] == uid:
+                    friends = row['top_groups']
+                    friends += row['top_friends']
+                    for g in row['groups']:
+                        if g not in row['top_groups']: friends.append(g)
+                    for f in row['friends']:
+                        if f not in row['top_friends']: friends.append(f)
+
+            for row in data['group_info']:
+                dict[row['id']] = row['name']
+
+        output = ""
+        for f in friends:
+            output += f"<a href='/sidebar_chat?uid={uid}&username={username}&target_id={f}&target_name={dict[f]}' style='text-decoration: none; color: black;'><li class='friend'><img src='/img/user_icon/{f}.png' /><div class='name'>{dict[f]}</div></li></a>"
+
+        return page_view("default_sidebar", uid=uid, username=username, output=output)
+    
+    else:
+        os.remove(f"chat_records/{uid}_{target_id}")
+        os.remove(f"chat_records/{target_id}_{uid}")
+
+        with open('info.json', 'r') as f:
+            data = json.load(f)
+            for i in range(len(data['user_info'])):
+                if data['user_info'][i]['unikey'] == uid:
+                    data['user_info'][i]['friends'].remove(target_id)
+                    if target_id in data['user_info'][i]['top_friends']: data['user_info'][i]['top_friends'].remove(target_id)
+                elif data['user_info'][i]['unikey'] == target_id:
+                    data['user_info'][i]['friends'].remove(uid)
+                    if uid in data['user_info'][i]['top_friends']: data['user_info'][i]['top_friends'].remove(uid)
+
+        with open('info.json', 'w') as f:
+            json.dump(data, f, indent=2)
 
     with open('info.json', 'r') as f:
         data = json.load(f)
@@ -915,11 +964,10 @@ def unfriend(uid, username, target_id, target_name):
             usernames.append(row['username'])
             unikeys.append(row['unikey'])
     
-    users = "<ul id='friend-list'>"
+    users = ""
     for i in range(len(unikeys)):
         if unikeys[i] == target_id: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend selected'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
         else: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
-    users += "</ul>"
 
     main = f'<div class="header"><h1 style="text-align: center; margin-top: 50; margin-right: 100; font-size: 50;">{target_name}</h1><ul><img src=\'img/user_icon/{target_id}.png\' style="width:150; height: 150; float: right; margin-right: 100; margin-top: -130; object-fit:scale-down;"/></ul></div>'
     if target_id in user_friends:
@@ -942,11 +990,10 @@ def user_detail(uid, username, target_id, target_name):
             usernames.append(row['username'])
             unikeys.append(row['unikey'])
     
-    users = "<ul id='friend-list'>"
+    users = ""
     for i in range(len(unikeys)):
         if unikeys[i] == target_id: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend selected'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
         else: users += f"<a href='/user_detail?uid={uid}&username={username}&target_id={unikeys[i]}&target_name={usernames[i]}' style=\"text-decoration: none; color: black;\"><li class='friend'><img src='img/user_icon/{unikeys[i]}.png'/><div class='name'>{usernames[i]}</div></li></a>"
-    users += "</ul>"
 
     main = f'<div class="header"><h1 style="text-align: center; margin-top: 50; margin-right: 100; font-size: 50;">{target_name}</h1><ul><img src=\'img/user_icon/{target_id}.png\' style="width:150; height: 150; float: right; margin-right: 100; margin-top: -130; object-fit:scale-down;"/></ul></div>'
     if target_id in user_friends:

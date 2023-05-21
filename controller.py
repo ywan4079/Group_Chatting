@@ -329,6 +329,7 @@ def unfriend():
     username = request.query.get('username')
     target_id = request.query.get('target_id')
     target_name = request.query.get('target_name')
+
     return model.unfriend(uid, username, target_id, target_name)
 
 @get('/user_detail')
